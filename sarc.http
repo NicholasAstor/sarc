@@ -1,0 +1,6 @@
+@sarc_HostAddress = http://localhost:5068
+
+GET {{sarc_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
