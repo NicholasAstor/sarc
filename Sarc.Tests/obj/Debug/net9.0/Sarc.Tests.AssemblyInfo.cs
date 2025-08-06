@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Sarc.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+29d4a46b7911f9a28238f40887aaf1596e6cb7ac")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d07b2b6dffaebb080a5723d11eb859fffd9d902d")]
 [assembly: System.Reflection.AssemblyProductAttribute("Sarc.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Sarc.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
