@@ -2,23 +2,25 @@ using Microsoft.AspNetCore.Mvc;
 using Sarc.Model.Entity;
 using Sarc.Service.Interface;
 
-namespace Sarc.Controllers
+namespace Sarc.Controllers;
+
+[ApiController]                              // <- isso ajuda o Swagger e validação automática
+[Route("api/[controller]")]                  // <- agora fica /api/hello
+public class HelloController : ControllerBase // <- API usa ControllerBase
 {
-    [Route("[controller]")]
-    public class HelloController : Controller
+    private readonly IHelloService _service;
+
+    public HelloController(IHelloService service)
     {
-        private readonly IHelloService _service;
+        _service = service;
+    }
 
-        public HelloController(IHelloService service)
-        {
-            _service = service;
-        }
-
-        [HttpGet]
-        public ActionResult<Hello> Get()
-        {
-            var greeting = _service.Hello();
-            return Ok(greeting);
-        }
+    /// <summary>Retorna uma saudação (endpoint de exemplo).</summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(Hello), StatusCodes.Status200OK)]
+    public ActionResult<Hello> Get()
+    {
+        var greeting = _service.Hello();
+        return Ok(greeting);
     }
 }
