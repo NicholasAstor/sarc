@@ -24,13 +24,6 @@ resource "aws_instance" "web_server" {
   
   associate_public_ip_address = true
 
-  user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    db_endpoint = var.db_endpoint
-    db_name     = var.db_name
-    db_username = var.db_username
-    db_password = var.db_password
-  }))
-
   tags = {
     Name        = "sarc-web-server"
     Environment = "development"
