@@ -1,62 +1,154 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Sarc.DTOs;
+using System.Security.Claims;
 using Sarc.Model.Entity;
+using Sarc.Service.Interface;
+using Sarc.DTOs;
 
 namespace Sarc.Controllers;
 
 [ApiController]
-[Route("api/[controller]")] // /api/users
+[Route("api/v1/[controller]")]
+[Authorize]
 public class UsersController : ControllerBase
 {
-    // Armazenamento em memória só para demo/Sprint 0
-    private static readonly List<User> _users = new();
+    private readonly IUserService _userService;
+    private readonly ILogger<UsersController> _logger;
 
+    public UsersController(IUserService userService, ILogger<UsersController> logger)
+    {
+        _userService = userService;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Lista todos os usuários (somente admin)
+    /// </summary>
     [HttpGet]
-    public ActionResult<IEnumerable<User>> GetAll() => Ok(_users);
-
-    [HttpGet("{id:guid}")]
-    public ActionResult<User> GetById(Guid id)
+    [Authorize(Policy = "AdminOnly")]
+    [ProducesResponseType(typeof(IEnumerable<User>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
     {
-        var u = _users.FirstOrDefault(x => x.Id == id);
-        return u is null ? NotFound() : Ok(u);
+        var users = await _userService.GetAllUsersAsync();
+        var userDtos = users.Select(u => new UserResponseDto
+        {
+            Id = u.Id,
+            Username = u.Username,
+            Email = u.Email,
+            FullName = u.FullName,
+            Roles = u.Roles
+        });
+        return Ok(userDtos);
+
+
     }
 
-    [HttpPost]
-    public ActionResult<User> Create([FromBody] UserCreateUpdateDto dto)
+    /// <summary>
+    /// Busca um usuário por ID (próprio usuário ou admin)
+    /// </summary>
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<User>> GetUserById(string id)
     {
-        if (!ModelState.IsValid) return ValidationProblem(ModelState);
+        // Verifica se o usuário está tentando acessar seus próprios dados ou se é admin
+        if (!IsOwnerOrAdmin(id))
+        {
+            return Forbid();
+        }
 
-        if (_users.Any(u => u.Email.Equals(dto.Email, StringComparison.OrdinalIgnoreCase)))
-            return Conflict(new { message = "Email already in use." });
+        var user = await _userService.GetUserByIdAsync(id);
+        if (user == null)
+        {
+            return NotFound(new { message = "Usuário não encontrado" });
+        }
 
-        var user = new User { Name = dto.Name, Email = dto.Email };
-        _users.Add(user);
-        return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+        return Ok(new UserResponseDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            FullName = user.FullName,
+            Roles = user.Roles
+        });
+
     }
 
-    [HttpPut("{id:guid}")]
-    public ActionResult<User> Update(Guid id, [FromBody] UserCreateUpdateDto dto)
+    /// <summary>
+    /// Atualiza um usuário (próprio usuário ou admin)
+    /// </summary>
+    [HttpPut("{id}")]
+    [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<User>> UpdateUser(string id, [FromBody] UpdateUserDto dto)
     {
-        if (!ModelState.IsValid) return ValidationProblem(ModelState);
+        if (!IsOwnerOrAdmin(id))
+        {
+            return Forbid();
+        }
 
-        var user = _users.FirstOrDefault(x => x.Id == id);
-        if (user is null) return NotFound();
+        var user = await _userService.UpdateUserAsync(id, dto);
+        if (user == null)
+        {
+            return NotFound(new { message = "Usuário não encontrado" });
+        }
 
-        if (_users.Any(u => u.Email.Equals(dto.Email, StringComparison.OrdinalIgnoreCase) && u.Id != id))
-            return Conflict(new { message = "Email already in use." });
+        return Ok(new UserResponseDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            FullName = user.FullName,
+            Roles = user.Roles
+        });
 
-        user.Name = dto.Name;
-        user.Email = dto.Email;
-        return Ok(user);
     }
 
-    [HttpDelete("{id:guid}")]
-    public IActionResult Delete(Guid id)
+    /// <summary>
+    /// Atualiza parcialmente um usuário (próprio usuário ou admin)
+    /// </summary>
+    [HttpPatch("{id}")]
+    [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<User>> PatchUser(string id, [FromBody] UpdateUserDto dto)
     {
-        var user = _users.FirstOrDefault(x => x.Id == id);
-        if (user is null) return NotFound();
+        return await UpdateUser(id, dto);
+    }
 
-        _users.Remove(user);
+    /// <summary>
+    /// Remove um usuário (somente admin)
+    /// </summary>
+    [HttpDelete("{id}")]
+    [Authorize(Policy = "AdminOnly")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteUser(string id)
+    {
+        var deleted = await _userService.DeleteUserAsync(id);
+        if (!deleted)
+        {
+            return NotFound(new { message = "Usuário não encontrado" });
+        }
+
         return NoContent();
+    }
+
+    private bool IsOwnerOrAdmin(string userId)
+    {
+        var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                         ?? User.FindFirst("sub")?.Value;
+        var isAdmin = User.HasClaim("cognito:groups", "admin");
+
+        return isAdmin || currentUserId == userId;
     }
 }

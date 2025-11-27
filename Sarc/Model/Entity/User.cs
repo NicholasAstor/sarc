@@ -1,16 +1,12 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace Sarc.Model.Entity;
 
 public class User
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-
-    [Required, StringLength(80)]
-    public string Name { get; set; } = default!;
-
-    [Required, EmailAddress, StringLength(120)]
-    public string Email { get; set; } = default!;
-
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string Username { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public List<string> Roles { get; set; } = new();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

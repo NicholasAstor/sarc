@@ -47,6 +47,12 @@ module "security_groups" {
     vpc_id = module.vpc.vpc_id
 }
 
+module "auth" {
+  source = "./modules/auth"
+
+  name = "sarc"
+}
+
 module "database" {
     source = "./modules/database"
 
