@@ -169,15 +169,15 @@ python get_token.py
 TOKEN="eyJraWQiOiJ..."
 
 # Listar todos os usuários (admin only)
-curl -X GET http://localhost:5000/api/users \
+curl -X GET http://localhost:5000/api/v1/users \
   -H "Authorization: Bearer $TOKEN"
 
 # Buscar usuário específico
-curl -X GET http://localhost:5000/api/users/admin-001 \
+curl -X GET http://localhost:5000/api/v1/users/admin-001 \
   -H "Authorization: Bearer $TOKEN"
 
 # Atualizar usuário
-curl -X PUT http://localhost:5000/api/users/user-001 \
+curl -X PUT http://localhost:5000/api/v1/users/user-001 \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -186,7 +186,7 @@ curl -X PUT http://localhost:5000/api/users/user-001 \
   }'
 
 # Deletar usuário (admin only)
-curl -X DELETE http://localhost:5000/api/users/user-001 \
+curl -X DELETE http://localhost:5000/api/v1/users/user-001 \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -209,12 +209,12 @@ curl -X DELETE http://localhost:5000/api/users/user-001 \
 
 - **admin**: Acesso total
 
-  - GET /api/users (listar todos)
-  - DELETE /api/users/:id (deletar qualquer usuário)
-  - GET/PUT/PATCH /api/users/:id (acessar qualquer usuário)
+  - GET /api/v1/users (listar todos)
+  - DELETE /api/v1/users/:id (deletar qualquer usuário)
+  - GET/PUT/PATCH /api/v1/users/:id (acessar qualquer usuário)
 
 - **user**: Acesso limitado
-  - GET/PUT/PATCH /api/users/:id (apenas próprio usuário)
+  - GET/PUT/PATCH /api/v1/users/:id (apenas próprio usuário)
 
 ### Estrutura de Claims JWT
 
@@ -298,19 +298,19 @@ O pipeline GitHub Actions executa automaticamente:
 
 ## 📚 Documentação da API
 
-### OpenAPI/Swagger
+### Openapi/v1/Swagger
 
 Acesse `http://localhost:5000` para ver a documentação interativa.
 
 ### Endpoints Disponíveis
 
-| Método | Endpoint       | Auth        | Descrição               |
-| ------ | -------------- | ----------- | ----------------------- |
-| GET    | /api/users     | Admin       | Lista todos os usuários |
-| GET    | /api/users/:id | Owner/Admin | Busca usuário por ID    |
-| PUT    | /api/users/:id | Owner/Admin | Atualiza usuário        |
-| PATCH  | /api/users/:id | Owner/Admin | Atualiza parcialmente   |
-| DELETE | /api/users/:id | Admin       | Remove usuário          |
+| Método | Endpoint          | Auth        | Descrição               |
+| ------ | ----------------- | ----------- | ----------------------- |
+| GET    | /api/v1/users     | Admin       | Lista todos os usuários |
+| GET    | /api/v1/users/:id | Owner/Admin | Busca usuário por ID    |
+| PUT    | /api/v1/users/:id | Owner/Admin | Atualiza usuário        |
+| PATCH  | /api/v1/users/:id | Owner/Admin | Atualiza parcialmente   |
+| DELETE | /api/v1/users/:id | Admin       | Remove usuário          |
 
 ## 🐛 Troubleshooting
 

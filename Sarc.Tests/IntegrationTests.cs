@@ -35,11 +35,11 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task GetAllUsers_WithAdminToken_ReturnsOk()
     {
         // Arrange
-        _client.DefaultRequestHeaders.Authorization = 
+        _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Test", "admin");
 
         // Act
-        var response = await _client.GetAsync("/api/users");
+        var response = await _client.GetAsync("/api/v1/users");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -52,7 +52,7 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task GetAllUsers_WithoutToken_ReturnsUnauthorized()
     {
         // Act
-        var response = await _client.GetAsync("/api/users");
+        var response = await _client.GetAsync("/api/v1/users");
 
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -62,11 +62,11 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task GetAllUsers_WithUserToken_ReturnsForbidden()
     {
         // Arrange
-        _client.DefaultRequestHeaders.Authorization = 
+        _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Test", "user");
 
         // Act
-        var response = await _client.GetAsync("/api/users");
+        var response = await _client.GetAsync("/api/v1/users");
 
         // Assert
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -76,11 +76,11 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task GetUserById_WithAdminToken_ReturnsOk()
     {
         // Arrange
-        _client.DefaultRequestHeaders.Authorization = 
+        _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Test", "admin");
 
         // Act
-        var response = await _client.GetAsync("/api/users/admin-001");
+        var response = await _client.GetAsync("/api/v1/users/admin-001");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -92,11 +92,11 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task GetUserById_OwnUser_ReturnsOk()
     {
         // Arrange
-        _client.DefaultRequestHeaders.Authorization = 
+        _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Test", "user:user-001");
 
         // Act
-        var response = await _client.GetAsync("/api/users/user-001");
+        var response = await _client.GetAsync("/api/v1/users/user-001");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -106,11 +106,11 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task GetUserById_OtherUser_ReturnsForbidden()
     {
         // Arrange
-        _client.DefaultRequestHeaders.Authorization = 
+        _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Test", "user:user-001");
 
         // Act
-        var response = await _client.GetAsync("/api/users/admin-001");
+        var response = await _client.GetAsync("/api/v1/users/admin-001");
 
         // Assert
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -120,11 +120,11 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task DeleteUser_WithAdminToken_ReturnsNoContent()
     {
         // Arrange
-        _client.DefaultRequestHeaders.Authorization = 
+        _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Test", "admin");
 
         // Act
-        var response = await _client.DeleteAsync("/api/users/user-001");
+        var response = await _client.DeleteAsync("/api/v1/users/user-001");
 
         // Assert
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
@@ -134,11 +134,11 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task DeleteUser_WithUserToken_ReturnsForbidden()
     {
         // Arrange
-        _client.DefaultRequestHeaders.Authorization = 
+        _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Test", "user");
 
         // Act
-        var response = await _client.DeleteAsync("/api/users/user-001");
+        var response = await _client.DeleteAsync("/api/v1/users/user-001");
 
         // Assert
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -151,7 +151,7 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
     public TestAuthHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         Microsoft.Extensions.Logging.ILoggerFactory logger,
-        System.Text.Encodings.Web.UrlEncoder encoder) 
+        System.Text.Encodings.Web.UrlEncoder encoder)
         : base(options, logger, encoder)
     {
     }

@@ -8,7 +8,7 @@ using Sarc.DTOs;
 namespace UserManagementApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 [Authorize]
 public class UsersController : ControllerBase
 {
@@ -119,7 +119,7 @@ public class UsersController : ControllerBase
 
     private bool IsOwnerOrAdmin(string userId)
     {
-        var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+        var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                          ?? User.FindFirst("sub")?.Value;
         var isAdmin = User.HasClaim("cognito:groups", "admin");
 
