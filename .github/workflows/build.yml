@@ -40,13 +40,6 @@ jobs:
           output: both
           thresholds: "60 80"
 
-      - name: Add Coverage PR Comment
-        uses: marocchino/sticky-pull-request-comment@v2
-        if: github.event_name == 'pull_request'
-        with:
-          recreate: true
-          path: code-coverage-results.md
-
   lint:
     runs-on: ubuntu-latest
 
@@ -75,15 +68,15 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
-        run: docker build -t user-management-api:latest .
+        run: docker build -t sarc-api:latest ./Sarc
 
       - name: Test Docker image
         run: |
-          docker run -d --name test-api -p 8080:8080 \
-            -e Jwt__Issuer=https://test-issuer \
-            -e Jwt__Audience=test-audience \
-            -e Jwt__JwksUri=https://test-jwks \
-            user-management-api:latest
+          docker run -d --name test-api -p 5000:5000 \
+          -e Jwt__Issuer=https://test-issuer \
+          -e Jwt__Audience=test-audience \
+          -e Jwt__JwksUri=https://test-jwks \
+          sarc-api:latest
           sleep 10
           docker logs test-api
           docker stop test-api
@@ -112,13 +105,14 @@ jobs:
 
       - name: Generate OpenAPI spec
         run: |
-          dotnet run --project UserManagementApi.csproj &
-          sleep 15
-          curl http://localhost:5000/swagger/v1/swagger.json -o openapi.json
-          pkill -f UserManagementApi
+          cd Sarc
+          dotnet run --urls http://localhost:5000 &
+          sleep 10
+          curl http://localhost:5000/swagger/v1/swagger.json -o ../openapi.json
+          pkill -f sarc
 
       - name: Upload OpenAPI spec
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: openapi-spec
           path: openapi.json

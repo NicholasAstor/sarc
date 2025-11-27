@@ -1,10 +1,12 @@
 using Xunit;
 using Moq;
-using UserManagementApi.Models;
-using UserManagementApi.Repositories;
-using UserManagementApi.Services;
+using Sarc.Model.Entity;
+using Sarc.Repository;
+using Sarc.Repository.Interface;
+using Sarc.Service;
+using Sarc.DTOs;
 
-namespace UserManagementApi.Tests;
+namespace Sarc.Tests;
 
 public class UserServiceTests
 {

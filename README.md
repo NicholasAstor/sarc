@@ -30,7 +30,7 @@ O sistema permite gerenciar salas e reservas feitas por usuários autenticados. 
 
 ## 📋 Requisitos
 
-- .NET 9.0 SDK
+- .NET 8.0 SDK
 - Docker & Docker Compose
 - AWS Account (para Cognito)
 - Terraform (para infraestrutura)

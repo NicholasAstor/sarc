@@ -51,7 +51,7 @@ public class InMemoryUserRepository : IUserRepository
         await _lock.WaitAsync();
         try
         {
-            return _users.Values.FirstOrDefault(u => 
+            return _users.Values.FirstOrDefault(u =>
                 u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
         }
         finally

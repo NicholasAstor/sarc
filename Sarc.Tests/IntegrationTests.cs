@@ -8,9 +8,9 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
-using UserManagementApi.Models;
+using Sarc.Model.Entity;
 
-namespace UserManagementApi.Tests;
+namespace Sarc.Tests;
 
 public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 {

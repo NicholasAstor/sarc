@@ -5,7 +5,7 @@ using Sarc.Model.Entity;
 using Sarc.Service.Interface;
 using Sarc.DTOs;
 
-namespace UserManagementApi.Controllers;
+namespace Sarc.Controllers;
 
 [ApiController]
 [Route("api/v1/[controller]")]
@@ -32,7 +32,17 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
     {
         var users = await _userService.GetAllUsersAsync();
-        return Ok(users);
+        var userDtos = users.Select(u => new UserResponseDto
+        {
+            Id = u.Id,
+            Username = u.Username,
+            Email = u.Email,
+            FullName = u.FullName,
+            Roles = u.Roles
+        });
+        return Ok(userDtos);
+
+
     }
 
     /// <summary>
@@ -57,7 +67,15 @@ public class UsersController : ControllerBase
             return NotFound(new { message = "Usuário não encontrado" });
         }
 
-        return Ok(user);
+        return Ok(new UserResponseDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            FullName = user.FullName,
+            Roles = user.Roles
+        });
+
     }
 
     /// <summary>
@@ -81,7 +99,15 @@ public class UsersController : ControllerBase
             return NotFound(new { message = "Usuário não encontrado" });
         }
 
-        return Ok(user);
+        return Ok(new UserResponseDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            FullName = user.FullName,
+            Roles = user.Roles
+        });
+
     }
 
     /// <summary>
