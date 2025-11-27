@@ -1,10 +1,36 @@
-# User Management API - Autenticação com AWS Cognito
+# Room Scheduling API – Reservas, Salas e Usuários
 
-API REST com autenticação JWT via AWS Cognito, controle de acesso baseado em roles (RBAC) e infraestrutura como código.
+API para gerenciamento de usuários, salas e reservas. Usuários autenticados podem criar e cancelar suas próprias reservas, enquanto administradores gerenciam salas e têm permissões ampliadas. A autenticação é feita via JWT emitido pelo AWS Cognito, seguindo controle de acesso por papéis (RBAC).
+
+## 🧠 Domínio e Fluxos de Negócio
+
+O sistema permite gerenciar salas e reservas feitas por usuários autenticados. O domínio é composto por três entidades principais:
+
+- **User** – representa o usuário autenticado via Cognito.
+- **Room** – sala que pode ser reservada.
+- **Schedule** – reserva vinculada a um usuário e a uma sala, com horário de início e fim.
+
+### Fluxo 1 — Agendar Sala (User)
+
+1. Usuário autentica e obtém JWT.
+2. Seleciona sala, data e horário.
+3. API valida conflito de horário e cria o `Schedule`.
+
+### Fluxo 2 — Cancelar Reserva (User/Admin)
+
+1. Usuário acessa suas reservas (`GET /api/v1/schedules/my`).
+2. Cancela uma reserva.
+3. Apenas o dono ou admin pode cancelar.
+
+### Fluxo 3 — Administração de Salas (Admin)
+
+1. Admin autentica com role `admin`.
+2. Cria, altera, lista e remove salas.
+3. Endpoints protegidos via `[Authorize(Policy = "AdminOnly")]`.
 
 ## 📋 Requisitos
 
-- .NET 8.0 SDK
+- .NET 9.0 SDK
 - Docker & Docker Compose
 - AWS Account (para Cognito)
 - Terraform (para infraestrutura)
@@ -14,7 +40,7 @@ API REST com autenticação JWT via AWS Cognito, controle de acesso baseado em r
 ### 1. Configurar Infraestrutura
 
 ```bash
-cd infra/
+cd infrastructure/
 terraform init
 terraform plan
 terraform apply
@@ -162,31 +188,132 @@ python get_token.py
 
 ## 📝 Testando a API
 
-### 1. Com cURL
+## 🔧 Exemplos de chamadas usando cURL
+
+Abaixo estão exemplos reais de chamadas para cada recurso da API.  
+Lembre-se de definir previamente o token JWT:
 
 ```bash
-# Obter token (exemplo com resultado do método 2)
-TOKEN="eyJraWQiOiJ..."
+TOKEN="eyJraWQiOiJ..."   # token de admin ou user, dependendo do exemplo
+```
 
-# Listar todos os usuários (admin only)
-curl -X GET http://localhost:5000/api/v1/users \
+## 👥 Users (Admin / User)
+
+### Listar todos os usuários (admin only)
+
+```bash
+curl -X GET \
+  http://localhost:5000/api/v1/users \
   -H "Authorization: Bearer $TOKEN"
+```
 
-# Buscar usuário específico
-curl -X GET http://localhost:5000/api/v1/users/admin-001 \
+### Buscar usuário específico (admin ou o próprio user)
+
+```bash
+curl -X GET \
+  http://localhost:5000/api/v1/users/{id} \
   -H "Authorization: Bearer $TOKEN"
+```
 
-# Atualizar usuário
-curl -X PUT http://localhost:5000/api/v1/users/user-001 \
+### Atualizar usuário (admin ou o próprio user)
+
+```bash
+curl -X PUT \
+  http://localhost:5000/api/v1/users/{id} \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "newemail@example.com",
+    "email": "new@example.com",
     "fullName": "Updated Name"
   }'
+```
 
-# Deletar usuário (admin only)
-curl -X DELETE http://localhost:5000/api/v1/users/user-001 \
+### Deletar usuário (admin only)
+
+```bash
+curl -X DELETE \
+  http://localhost:5000/api/v1/users/{id} \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+---
+
+## 🏢 Rooms (Admin only)
+
+### Listar salas com paginação e filtro
+
+```bash
+curl -X GET \
+  "http://localhost:5000/api/v1/rooms?page=1&pageSize=10&minCapacity=5" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Criar sala
+
+```bash
+curl -X POST \
+  http://localhost:5000/api/v1/rooms \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Sala 101",
+    "capacity": 12
+  }'
+```
+
+### Editar sala
+
+```bash
+curl -X PUT \
+  http://localhost:5000/api/v1/rooms/{roomId} \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Sala 101A",
+    "capacity": 15,
+    "isActive": true
+  }'
+```
+
+### Deletar sala
+
+```bash
+curl -X DELETE \
+  http://localhost:5000/api/v1/rooms/{roomId} \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+---
+
+## 📅 Schedules (User/Admin)
+
+### Criar uma reserva (User ou Admin)
+
+```bash
+curl -X POST \
+  http://localhost:5000/api/v1/schedules \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "roomId": "ROOM_ID_AQUI",
+    "startAt": "2025-12-01T14:00:00Z",
+    "endAt": "2025-12-01T15:00:00Z"
+  }'
+```
+
+### Listar minhas reservas (User)
+
+```bash
+curl -X GET \
+  http://localhost:5000/api/v1/schedules/my \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Cancelar reserva (owner ou admin)
+
+```bash
+curl -X DELETE \
+  http://localhost:5000/api/v1/schedules/{scheduleId} \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -205,29 +332,33 @@ curl -X DELETE http://localhost:5000/api/v1/users/user-001 \
 
 ## 🔒 Controle de Acesso (RBAC)
 
-### Roles Disponíveis
+A autenticação é feita via JWT emitido pelo AWS Cognito. As permissões são aplicadas via claims de role (`cognito:groups`) e por ownership (um usuário só acessa recursos que pertencem a ele).
 
-- **admin**: Acesso total
+### 🧑‍💼 admin — Acesso total
 
-  - GET /api/v1/users (listar todos)
-  - DELETE /api/v1/users/:id (deletar qualquer usuário)
-  - GET/PUT/PATCH /api/v1/users/:id (acessar qualquer usuário)
+Administradores podem gerenciar **usuários**, **salas** e **todas as reservas**.
 
-- **user**: Acesso limitado
-  - GET/PUT/PATCH /api/v1/users/:id (apenas próprio usuário)
+- `/api/v1/users/*` — CRUD completo de usuários
+- `/api/v1/rooms/*` — CRUD completo de salas
+- `/api/v1/schedules/*` — pode cancelar qualquer reserva
+- Pode acessar dados de qualquer usuário
 
-### Estrutura de Claims JWT
+### 🙍 user — Acesso limitado
 
-```json
-{
-  "sub": "user-id-123",
-  "cognito:groups": ["admin"],
-  "email": "user@example.com",
-  "iss": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_XXXXXXXXX",
-  "aud": "client-id",
-  "exp": 1234567890
-}
-```
+Usuários autenticados interagem **somente com seus próprios dados** e **suas próprias reservas**.
+
+- `GET/PUT/PATCH /api/v1/users/{id}` — apenas o próprio usuário
+- `POST /api/v1/schedules` — criar reserva
+- `GET /api/v1/schedules/my` — listar suas reservas
+- `DELETE /api/v1/schedules/{id}` — cancelar **apenas reservas próprias**
+
+### 🔐 Ownership
+
+Para recursos vinculados a um usuário (ex.: reservas), a API aplica:
+
+> O usuário só pode acessar ou modificar itens cujo `UserId` seja igual ao `sub` / `NameIdentifier` do token.
+
+Administradores ignoram essa restrição.
 
 ## 🧪 Testes
 
@@ -255,45 +386,79 @@ Abra `coverage-report/index.html` no navegador.
 ## 📦 Estrutura do Projeto
 
 ```
-.
-├── Controllers/
-│   └── UsersController.cs       # Endpoints da API
-├── Models/
-│   └── User.cs                   # Modelos de dados
-├── Repositories/
-│   └── IUserRepository.cs        # Camada de dados
-├── Services/
-│   └── UserService.cs            # Lógica de negócio
-├── UserManagementApi.Tests/
-│   ├── UserServiceTests.cs       # Testes unitários
-│   └── IntegrationTests.cs       # Testes de integração
-├── infra/
-│   └── main.tf                   # Terraform (Cognito)
-├── .github/
-│   └── workflows/
-│       └── ci.yml                # Pipeline CI/CD
-├── docker-compose.yml
-├── Dockerfile
-├── Program.cs
-└── README.md
+Sarc/
+ ├── Controllers/
+ │    ├── UsersController.cs
+ │    ├── RoomsController.cs
+ │    └── SchedulesController.cs
+ │
+ ├── DTOs/
+ │    ├── CreateRoomDto.cs
+ │    ├── UpdateRoomDto.cs
+ │    └── CreateScheduleDto.cs
+ │
+ ├── Model/Entity/
+ │    ├── User.cs
+ │    ├── Room.cs
+ │    └── Schedule.cs
+ │
+ ├── Repository/
+ │    ├── Interface/
+ │    ├── RoomRepository.cs
+ │    ├── ScheduleRepository.cs
+ │    └── UserRepository.cs
+ │
+ ├── Service/
+ │    ├── Interface/
+ │    ├── RoomService.cs
+ │    ├── ScheduleService.cs
+ │    └── UserService.cs
+ │
+ ├── docker-compose.yml
+ ├── Dockerfile
+ └── Program.cs
+
+Sarc.Tests/
+ ├── IntegrationTests.cs
+ ├── UserServiceTests.cs
+ └── ScheduleServiceTests.cs
+
+infrastructure/
+ └── modules/
+      ├── auth/
+      ├── database/
+      ├── networking/
+      ├── ec2/
+      └── security/
+
 ```
 
 ## 🔄 CI/CD Pipeline
 
-O pipeline GitHub Actions executa automaticamente:
+Este projeto utiliza GitHub Actions para garantir qualidade contínua da aplicação.  
+O pipeline executa automaticamente as seguintes etapas:
 
-1. **Lint**: Verificação de formatação de código
-2. **Build**: Compilação do projeto
-3. **Test**: Testes unitários e de integração
-4. **Coverage**: Relatório de cobertura de código
-5. **Docker**: Build e teste da imagem Docker
-6. **Docs**: Geração da especificação OpenAPI
+1. **Lint**  
+   Verifica formatação e padrões de código usando `dotnet format`, garantindo estilo consistente no repositório.
+
+2. **Build**  
+   Compila a solução em modo Release para validar que o código está funcional.
+
+3. **Test + Coverage**  
+   Executa os testes automatizados (unitários) e gera relatório de cobertura utilizando XPlat Code Coverage.  
+   Um resumo da cobertura é publicado automaticamente no Pull Request.
+
+4. **Docker Build & Test**  
+   Constrói a imagem Docker da API e executa um container de teste para garantir que a imagem sobe corretamente.
+
+5. **Docs (OpenAPI)**  
+   Gera automaticamente a especificação OpenAPI (`openapi.json`) a partir da API rodando localmente no próprio pipeline e a publica como artifact.
 
 ### Status dos Checks
 
 - ✅ Lint passa
 - ✅ Build passa
-- ✅ Tests passa (> 80% coverage)
+- ✅ Tests passa (coverage report gerado e publicado no PR)
 - ✅ Docker build passa
 
 ## 📚 Documentação da API
@@ -304,13 +469,19 @@ Acesse `http://localhost:5000` para ver a documentação interativa.
 
 ### Endpoints Disponíveis
 
-| Método | Endpoint          | Auth        | Descrição               |
-| ------ | ----------------- | ----------- | ----------------------- |
-| GET    | /api/v1/users     | Admin       | Lista todos os usuários |
-| GET    | /api/v1/users/:id | Owner/Admin | Busca usuário por ID    |
-| PUT    | /api/v1/users/:id | Owner/Admin | Atualiza usuário        |
-| PATCH  | /api/v1/users/:id | Owner/Admin | Atualiza parcialmente   |
-| DELETE | /api/v1/users/:id | Admin       | Remove usuário          |
+| Método | Endpoint               | Auth        | Descrição                        |
+| ------ | ---------------------- | ----------- | -------------------------------- |
+| GET    | /api/v1/users          | Admin       | Lista usuários                   |
+| GET    | /api/v1/users/{id}     | Admin/User  | Consulta usuário                 |
+| PATCH  | /api/v1/users/{id}     | Admin/User  | Atualiza usuário                 |
+| DELETE | /api/v1/users/{id}     | Admin       | Remove usuário                   |
+| GET    | /api/v1/rooms          | Admin       | Lista salas (filtro + paginação) |
+| POST   | /api/v1/rooms          | Admin       | Cria sala                        |
+| PUT    | /api/v1/rooms/{id}     | Admin       | Atualiza sala                    |
+| DELETE | /api/v1/rooms/{id}     | Admin       | Remove sala                      |
+| POST   | /api/v1/schedules      | User/Admin  | Cria reserva                     |
+| GET    | /api/v1/schedules/my   | User/Admin  | Lista reservas do usuário        |
+| DELETE | /api/v1/schedules/{id} | Owner/Admin | Cancela reserva                  |
 
 ## 🐛 Troubleshooting
 

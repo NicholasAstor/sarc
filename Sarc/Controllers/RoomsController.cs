@@ -7,7 +7,7 @@ using Sarc.Service.Interface;
 namespace Sarc.Controllers;
 
 [ApiController]
-[Route("api/v1/rooms")]
+[Route("api/v1/[controller]")]
 [Authorize(Policy = "AdminOnly")] // só admin pode mexer em salas
 public class RoomsController : ControllerBase
 {

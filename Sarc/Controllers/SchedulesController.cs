@@ -8,7 +8,7 @@ using Sarc.Service.Interface;
 namespace Sarc.Controllers;
 
 [ApiController]
-[Route("api/v1/schedules")]
+[Route("api/v1/[controller]")]
 [Authorize] // precisa estar autenticado para mexer em reservas
 public class SchedulesController : ControllerBase
 {
