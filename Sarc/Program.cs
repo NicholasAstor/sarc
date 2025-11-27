@@ -73,7 +73,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
         // Configurar JWKS
         options.MetadataAddress = $"{jwtIssuer}/.well-known/jwks.json";
-        
+
         options.Events = new JwtBearerEvents
         {
             OnAuthenticationFailed = context =>
@@ -94,10 +94,10 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy =>
         policy.RequireClaim("cognito:groups", "admin"));
-    
+
     options.AddPolicy("UserOrAdmin", policy =>
         policy.RequireAssertion(context =>
-            context.User.HasClaim(c => c.Type == "cognito:groups" && 
+            context.User.HasClaim(c => c.Type == "cognito:groups" &&
                 (c.Value == "admin" || c.Value == "user"))));
 });
 
@@ -115,6 +115,13 @@ builder.Services.AddCors(options =>
 // Registro de serviços
 builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddSingleton<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<IRoomService, RoomService>();
+
+builder.Services.AddSingleton<IScheduleRepository, ScheduleRepository>();
+builder.Services.AddScoped<IScheduleService, ScheduleService>();
+
 
 var app = builder.Build();
 
